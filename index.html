@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Puzzle Biotechnologies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one centred phone-width column. A honeycomb of 10 cells (the course logo motif) is the progress bar: each question fills one cell. */
+:root{
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#EEF4F4; --surface:#FFFFFF; --ink:#10303A; --muted:#4F6B73; --line:#CFDDE0;
+  --teal:#1B7F93; --amber:#F2A33A; --amber-ink:#3A2100;
+  --good:#1F8A5B; --good-bg:#DDF2E7; --bad:#B93A32; --bad-bg:#F8E0DD;
+  --hex-off:#D3E2E5; --hex-cur:#F8D08F;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1D23; --surface:#132C34; --ink:#E6F1F2; --muted:#9DB8BE; --line:#244650;
+    --teal:#4CC0D6; --amber:#F5B04F; --amber-ink:#3A2100;
+    --good:#52C28F; --good-bg:#12392B; --bad:#F08178; --bad-bg:#40201E;
+    --hex-off:#1F3F49; --hex-cur:#7A5A25; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1D23; --surface:#132C34; --ink:#E6F1F2; --muted:#9DB8BE; --line:#244650;
+  --teal:#4CC0D6; --amber:#F5B04F; --amber-ink:#3A2100;
+  --good:#52C28F; --good-bg:#12392B; --bad:#F08178; --bad-bg:#40201E;
+  --hex-off:#1F3F49; --hex-cur:#7A5A25; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:1rem;line-height:1.5;padding-inline:16px;padding-block:20px 32px}
+.wrap{max-width:34rem;margin-inline:auto;display:flex;flex-direction:column;gap:20px;min-width:0}
+header{display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+h1{font-family:var(--font-display);font-weight:800;font-size:1.65rem;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.sub{margin:6px 0 0;color:var(--muted);font-size:.95rem;max-width:34ch}
+.lang{display:flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;flex:none}
+.lang button{font:inherit;font-weight:600;font-size:.8rem;letter-spacing:.06em;padding:6px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--teal);color:var(--bg)}
+.lang button:focus-visible,.opt:focus-visible,.cta:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+/* honeycomb */
+.comb{--w:2.3rem;--gap:.2rem;display:inline-flex;flex-direction:column;align-self:flex-start}
+.comb .row{display:flex;gap:var(--gap)}
+.comb .row+.row{margin-top:calc(var(--w)*-.2887 + var(--gap)*.87);margin-left:calc(var(--w)/2 + var(--gap)/2)}
+.hex{width:var(--w);height:calc(var(--w)*1.1547);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--hex-off);transition:background .25s}
+.hex.cur{background:var(--hex-cur)}
+.hex.ok{background:var(--good)}
+.hex.ko{background:var(--bad)}
+.comb.lg{--w:3.1rem;--gap:.25rem;align-self:center}
+.combrow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.count{font-variant-numeric:tabular-nums;font-weight:600;color:var(--muted);font-size:.9rem;text-align:right}
+.count strong{color:var(--ink);font-size:1.25rem;font-family:var(--font-display)}
+
+/* question */
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.qlabel{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--teal)}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.3rem;line-height:1.25;margin:0;text-wrap:balance}
+.opts{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.opt{width:100%;display:flex;align-items:center;gap:12px;text-align:left;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;min-height:3.25rem;transition:border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--teal)}
+.opt:disabled{cursor:default}
+.opt .tag{flex:none;width:2rem;height:2.31rem;display:grid;place-items:center;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--hex-off);font-weight:600;font-size:.85rem}
+.opt .txt{min-width:0;overflow-wrap:anywhere}
+.opt.good{border-color:var(--good);background:var(--good-bg)}
+.opt.good .tag{background:var(--good);color:var(--bg)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.opt.bad .tag{background:var(--bad);color:var(--bg)}
+.opt.dim{opacity:.6}
+.fb{border-radius:14px;padding:14px 16px;background:var(--bg);border-left:5px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.fb.ok{border-left-color:var(--good)}
+.fb.ko{border-left-color:var(--bad)}
+.fb b{font-family:var(--font-display);font-size:1.05rem}
+.fb p{margin:0;color:var(--muted);font-size:.95rem}
+.cta{align-self:stretch;font:inherit;font-weight:600;font-size:1.05rem;background:var(--amber);color:var(--amber-ink);border:0;border-radius:14px;padding:14px 18px;cursor:pointer}
+.cta:hover{filter:brightness(1.05)}
+
+/* result */
+.score{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.score .big{font-family:var(--font-display);font-weight:800;font-size:3.4rem;line-height:1;font-variant-numeric:tabular-nums}
+.score .big small{font-size:1.4rem;color:var(--muted);font-weight:600}
+.score p{margin:0;color:var(--muted);max-width:34ch}
+.rev{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
+.rev li{border-top:1.5px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.rev .rq{font-weight:600}
+.rev .ra{color:var(--good);font-weight:600}
+.revt{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--muted);margin:0}
+footer{font-size:.8rem;color:var(--muted);line-height:1.4}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<style>html{color-scheme:light dark}body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div>
+        <h1 id="title"></h1>
+        <p class="sub" id="sub"></p>
+      </div>
+      <div class="lang" role="group" aria-label="Langue / Language">
+        <button type="button" id="b-fr" aria-pressed="true">FR</button>
+        <button type="button" id="b-en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <div class="combrow" id="combrow"></div>
+  </header>
+  <main id="main" aria-live="polite"></main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+// Questions: the first option of each list is the correct one. Order is shuffled on every play.
+var Q = [
+ { fr:{ q:"Qui a utilisé le terme « biotechnologie » en 1919 pour décrire la conversion de matières premières organiques en produits plus utiles ?",
+        o:["Károly Ereky","Louis Pasteur","Gregor Mendel","Alexander Fleming"],
+        e:"Selon Robert Bud, c'est le Hongrois Károly Ereky qui a employé ce mot en 1919." },
+   en:{ q:"Who used the word “biotechnology” in 1919 to describe turning organic raw materials into more useful products?",
+        o:["Károly Ereky","Louis Pasteur","Gregor Mendel","Alexander Fleming"],
+        e:"According to Robert Bud, the Hungarian Károly Ereky used the term in 1919." } },
+ { fr:{ q:"En 1953, qui a proposé le modèle de la double hélice de l'ADN ?",
+        o:["Watson et Crick","Jacob et Monod","Köhler et Milstein","Khorana et Mullis"],
+        e:"Watson et Crick ont donné le modèle structural de l'ADN, qui explique sa réplication et son rôle dans l'hérédité." },
+   en:{ q:"In 1953, who proposed the double helix model of DNA?",
+        o:["Watson and Crick","Jacob and Monod","Köhler and Milstein","Khorana and Mullis"],
+        e:"Watson and Crick gave the structural model of DNA, which explains its replication and its role in heredity." } },
+ { fr:{ q:"Quelle moisissure produit la pénicilline découverte par Alexander Fleming ?",
+        o:["Penicillium notatum","Saccharomyces cerevisiae","Aspergillus niger","Lactobacillus delbrueckii"],
+        e:"Fleming a vu des staphylocoques mourir autour d'une moisissure, Penicillium notatum, dans une boîte de Petri." },
+   en:{ q:"Which mould produces the penicillin discovered by Alexander Fleming?",
+        o:["Penicillium notatum","Saccharomyces cerevisiae","Aspergillus niger","Lactobacillus delbrueckii"],
+        e:"Fleming saw staphylococci die around a mould, Penicillium notatum, in a Petri dish." } },
+ { fr:{ q:"Quelle couleur désigne la biotechnologie liée à l'agriculture (nouvelles variétés végétales, biofertilisants, biopesticides) ?",
+        o:["Verte","Rouge","Blanche","Bleue"],
+        e:"La biotechnologie verte est axée sur l'agriculture. La rouge concerne la médecine, la blanche l'industrie et la bleue la mer." },
+   en:{ q:"Which colour stands for biotechnology applied to agriculture (new plant varieties, biofertilisers, biopesticides)?",
+        o:["Green","Red","White","Blue"],
+        e:"Green biotechnology focuses on agriculture. Red is medicine, white is industry and blue is the sea." } },
+ { fr:{ q:"Que désigne la bioremédiation ?",
+        o:["L'élimination de polluants (métaux lourds, hydrocarbures) par des micro-organismes et des plantes","La production de vaccins par génie génétique","La conservation des aliments par le froid","La fabrication de biocarburants à partir de sucres"],
+        e:"La bioremédiation utilise des micro-organismes et des plantes pour isoler et éliminer des polluants." },
+   en:{ q:"What does bioremediation mean?",
+        o:["Removing pollutants (heavy metals, hydrocarbons) with microorganisms and plants","Producing vaccines by genetic engineering","Preserving food by cold","Making biofuels from sugars"],
+        e:"Bioremediation uses microorganisms and plants to isolate and remove pollutants." } },
+ { fr:{ q:"Les nano-objets ont une taille comprise entre…",
+        o:["1 et 100 nm","1 et 100 µm","100 et 1000 nm","0,01 et 0,1 nm"],
+        e:"Les nanotechnologies travaillent sur des objets de 1 à 100 nm. Un nanomètre est environ 100 fois plus petit que la molécule d'ADN." },
+   en:{ q:"Nano-objects have a size between…",
+        o:["1 and 100 nm","1 and 100 µm","100 and 1000 nm","0.01 and 0.1 nm"],
+        e:"Nanotechnologies work on objects of 1 to 100 nm." } },
+ { fr:{ q:"En quoi consiste la pasteurisation ?",
+        o:["Chauffer entre 62 et 88 °C puis refroidir brusquement","Congeler à -30 °C ou -50 °C très rapidement","Porter à 140–150 °C pendant 2 à 5 secondes","Exposer l'aliment à un rayonnement ionisant"],
+        e:"La pasteurisation élimine un grand nombre de micro-organismes. À 140–150 °C pendant quelques secondes, c'est le traitement UHT." },
+   en:{ q:"What is pasteurisation?",
+        o:["Heating between 62 and 88 °C, then cooling suddenly","Deep-freezing quickly at -30 °C to -50 °C","Heating to 140–150 °C for 2 to 5 seconds","Exposing food to ionising radiation"],
+        e:"Pasteurisation kills a large number of microorganisms. Heating to 140–150 °C for a few seconds is UHT treatment." } },
+ { fr:{ q:"Dans un bioréacteur en culture continue de type chémostat, le volume réactionnel est…",
+        o:["constant","croissant jusqu'à remplissage de la cuve","nul","décroissant au cours du temps"],
+        e:"Le milieu frais entre en permanence, le milieu épuisé et les cellules sortent : le volume reste constant." },
+   en:{ q:"In a bioreactor run as a continuous culture (chemostat), the culture volume is…",
+        o:["constant","increasing until the vessel is full","zero","decreasing over time"],
+        e:"Fresh medium enters all the time while spent medium and cells leave, so the volume stays constant." } },
+ { fr:{ q:"Quelle est l'unité de base (monomère) des acides nucléiques ?",
+        o:["Le nucléotide","L'acide aminé","L'ose (monosaccharide)","L'acide gras"],
+        e:"Les nucléotides sont reliés par des liaisons phosphodiester. Les acides aminés forment les protéines." },
+   en:{ q:"What is the basic unit (monomer) of nucleic acids?",
+        o:["The nucleotide","The amino acid","The simple sugar (monosaccharide)","The fatty acid"],
+        e:"Nucleotides are linked by phosphodiester bonds. Amino acids make up proteins." } },
+ { fr:{ q:"À quoi sert la PCR (Polymerase Chain Reaction) en diagnostic ?",
+        o:["À amplifier l'ADN pour détecter le matériel génétique d'un agent infectieux","À produire des anticorps monoclonaux","À stériliser les instruments médicaux","À mesurer le pH d'un bioréacteur"],
+        e:"La PCR est très sensible et spécifique. Elle recherche l'ADN ou l'ARN de l'agent plutôt que l'agent lui-même." },
+   en:{ q:"What is PCR (Polymerase Chain Reaction) used for in diagnosis?",
+        o:["Amplifying DNA to detect the genetic material of an infectious agent","Producing monoclonal antibodies","Sterilising medical instruments","Measuring the pH of a bioreactor"],
+        e:"PCR is very sensitive and specific. It looks for the agent's DNA or RNA rather than the agent itself." } }
+];
+
+var T = {
+ fr:{ title:"Puzzle Biotechnologies", sub:"10 questions pour compléter le nid d'abeille. Chaque bonne réponse remplit une case.",
+      qn:function(i){return "Question "+i+" sur 10";}, good:"Bonne réponse !", bad:"Pas tout à fait.", next:"Question suivante", fin:"Voir mon score",
+      right:"bonnes réponses", again:"Rejouer", review:"À revoir", yourans:"Réponse attendue :",
+      msg:["Relisez le cours, puis retentez votre chance.","C'est un début. Relisez les parties manquées.","Bon résultat, il reste quelques points à revoir.","Très bien, vous maîtrisez l'essentiel.","Parfait, le nid d'abeille est complet !"],
+      foot:"Source : cours « Introduction aux Biotechnologies », Dr DEHIMAT Abdelouahab, Université Mohamed Boudiaf M'sila, 2021-2022.",
+      score:"Score" },
+ en:{ title:"Biotechnology Puzzle", sub:"10 questions to complete the honeycomb. Each right answer fills one cell.",
+      qn:function(i){return "Question "+i+" of 10";}, good:"Correct!", bad:"Not quite.", next:"Next question", fin:"See my score",
+      right:"correct answers", again:"Play again", review:"To review", yourans:"Expected answer:",
+      msg:["Reread the course, then try again.","A start. Reread the parts you missed.","Good result, a few points left to review.","Very good, you know the essentials.","Perfect, the honeycomb is complete!"],
+      foot:"Source: course “Introduction aux Biotechnologies”, Dr DEHIMAT Abdelouahab, Mohamed Boudiaf University of M'sila, 2021-2022.",
+      score:"Score" }
+};
+
+var lang = "fr";
+try { var saved = localStorage.getItem("biotech-puzzle-lang"); if (saved === "en" || saved === "fr") lang = saved; } catch (e) {}
+
+var idx = 0, perms = [], picks = [], locked = false;
+
+function shuffle(a){ for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function newGame(){
+  idx = 0; locked = false; picks = [];
+  perms = Q.map(function(){ return shuffle([0,1,2,3]); });
+  render();
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function score(){ var n=0; for (var i=0;i<picks.length;i++){ if (picks[i]!==undefined && perms[i][picks[i]]===0) n++; } return n; }
+
+function comb(cls){
+  function cell(i){
+    var c = "hex";
+    if (picks[i] !== undefined) c += perms[i][picks[i]]===0 ? " ok" : " ko";
+    else if (i===idx && !finished()) c += " cur";
+    return '<div class="'+c+'"></div>';
+  }
+  var r1="", r2="";
+  for (var i=0;i<5;i++) r1 += cell(i);
+  for (var k=5;k<10;k++) r2 += cell(k);
+  return '<div class="comb '+(cls||"")+'" aria-hidden="true"><div class="row">'+r1+'</div><div class="row">'+r2+'</div></div>';
+}
+function finished(){ return picks.length===10 && idx>=10; }
+
+function render(){
+  var t = T[lang];
+  document.documentElement.lang = lang;
+  document.getElementById("title").textContent = t.title;
+  document.getElementById("sub").textContent = t.sub;
+  document.getElementById("foot").textContent = t.foot;
+  document.getElementById("b-fr").setAttribute("aria-pressed", lang==="fr");
+  document.getElementById("b-en").setAttribute("aria-pressed", lang==="en");
+  var done = finished();
+  var sc = score();
+  document.getElementById("combrow").innerHTML = comb("") +
+    '<div class="count"><strong>'+sc+'</strong> / 10<br>'+esc(t.score)+'</div>';
+  document.getElementById("main").innerHTML = done ? resultHTML() : questionHTML();
+  bind();
+}
+
+function questionHTML(){
+  var t = T[lang], d = Q[idx][lang], p = perms[idx], answered = picks[idx] !== undefined;
+  var h = '<section class="card"><div class="qlabel">'+esc(t.qn(idx+1))+'</div><h2>'+esc(d.q)+'</h2><ul class="opts">';
+  for (var i=0;i<4;i++){
+    var cls = "opt";
+    if (answered){
+      if (p[i]===0) cls += " good";
+      else if (picks[idx]===i) cls += " bad";
+      else cls += " dim";
+    }
+    h += '<li><button type="button" class="'+cls+'" data-i="'+i+'"'+(answered?' disabled':'')+'><span class="tag">'+"ABCD".charAt(i)+'</span><span class="txt">'+esc(d.o[p[i]])+'</span></button></li>';
+  }
+  h += '</ul>';
+  if (answered){
+    var ok = p[picks[idx]]===0;
+    h += '<div class="fb '+(ok?'ok':'ko')+'"><b>'+esc(ok?t.good:t.bad)+'</b><p>'+esc(d.e)+'</p></div>';
+    h += '<button type="button" class="cta" id="next">'+esc(idx===9?t.fin:t.next)+'</button>';
+  }
+  return h + '</section>';
+}
+
+function resultHTML(){
+  var t = T[lang], sc = score();
+  var tier = sc<=3?0 : sc<=5?1 : sc<=7?2 : sc<=9?3 : 4;
+  var h = '<section class="card"><div class="score">'+comb("lg")+'<div class="big">'+sc+'<small> / 10</small></div><p><strong>'+sc+'</strong> '+esc(t.right)+'. '+esc(t.msg[tier])+'</p></div>';
+  var miss = "";
+  for (var i=0;i<10;i++){
+    if (perms[i][picks[i]]!==0){
+      miss += '<li><span class="rq">'+(i+1)+'. '+esc(Q[i][lang].q)+'</span><span class="ra">'+esc(t.yourans)+' '+esc(Q[i][lang].o[0])+'</span></li>';
+    }
+  }
+  if (miss) h += '<p class="revt">'+esc(t.review)+'</p><ul class="rev">'+miss+'</ul>';
+  h += '<button type="button" class="cta" id="again">'+esc(t.again)+'</button></section>';
+  return h;
+}
+
+function bind(){
+  var btns = document.querySelectorAll(".opt");
+  for (var i=0;i<btns.length;i++){
+    btns[i].addEventListener("click", function(ev){
+      var n = Number(ev.currentTarget.getAttribute("data-i"));
+      if (picks[idx] !== undefined) return;
+      picks[idx] = n;
+      render();
+      var nx = document.getElementById("next"); if (nx) nx.focus({preventScroll:false});
+    });
+  }
+  var nx = document.getElementById("next");
+  if (nx) nx.addEventListener("click", function(){ idx++; render(); window.scrollTo(0,0); });
+  var ag = document.getElementById("again");
+  if (ag) ag.addEventListener("click", function(){ newGame(); window.scrollTo(0,0); });
+}
+
+function setLang(l){
+  lang = l;
+  try { localStorage.setItem("biotech-puzzle-lang", l); } catch (e) {}
+  render();
+}
+document.getElementById("b-fr").addEventListener("click", function(){ setLang("fr"); });
+document.getElementById("b-en").addEventListener("click", function(){ setLang("en"); });
+newGame();
+</script>
+
+</body>
+</html>
